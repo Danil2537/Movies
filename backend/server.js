@@ -2,10 +2,13 @@ require('dotenv').config();
 const express = require('express');
 const sequelize = require('./sequelize');
 const { Op } = require("sequelize");
-const { Movie, Star } = require("./models");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const { Movie, Star, User } = require("./models");
 
 const app = express();
 const PORT = process.env.APP_PORT || 8050;
+const authMiddleware = require("./auth");
 
 app.use(express.json());
 app.use(express.text());
@@ -21,19 +24,58 @@ app.get("/api/v1", (req, res) => {
     return;
 });
 
-app.post("/api/v1/users", async (req,res)=> { 
-    
-    req.status(200);
-    return;
+const createToken = (user) => {
+    return jwt.sign({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt
+    }, process.env.JWT_SECRET, { expiresIn: '7d' });
+};
+
+app.post('/api/v1/users', async (req, res) => {
+    try {
+        const { email, name, password, confirmPassword } = req.body;
+        if (password !== confirmPassword) {
+            return res.status(400).json({ error: "Passwords do not match" });
+        }
+
+        const existing = await User.findOne({ where: { email } });
+        if (existing) return res.status(400).json({ error: "User already exists" });
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const user = await User.create({ email, name, password: hashedPassword });
+
+        const token = createToken(user);
+        return res.status(200).json({ token, status: 1 });
+    } catch (error) {
+        console.error("Register error:", error);
+        return res.status(500).json({ error: "Internal Server Error" });
+    }
 });
 
-app.post("/api/v1/sessions", async (req,res)=> { 
-    
-    req.status(200);
-    return;
+app.post('/api/v1/sessions', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        const user = await User.findOne({ where: { email } });
+
+        if (!user) return res.status(401).json({ error: "Invalid user" });
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) return res.status(401).json({ error: "Invalid credentials" });
+
+        const token = createToken(user);
+        return res.status(200).json({ token, status: 1 });
+    } catch (error) {
+        console.error("Login error:", error);
+        return res.status(500).json({ error: "Internal Server Error" });
+    }
 });
 
-app.post("/api/v1/movies", async (req,res)=>{
+
+
+app.post("/api/v1/movies", authMiddleware, async (req,res)=>{
     try {
         const { title, year, format, actors } = req.body;
 
@@ -62,7 +104,7 @@ app.post("/api/v1/movies", async (req,res)=>{
   }
 });
 
-app.delete("/api/v1/movies/:id", async (req,res)=>{
+app.delete("/api/v1/movies/:id", authMiddleware, async (req,res)=>{
     try {
         const movieId = req.params.id;
         await Movie.destroy({where: {id: movieId}});
@@ -75,7 +117,7 @@ app.delete("/api/v1/movies/:id", async (req,res)=>{
     }
 });
 
-app.patch("/api/v1/movies/:id", async (req,res)=> { 
+app.patch("/api/v1/movies/:id",  authMiddleware, async (req,res)=> { 
 try {
     const movieId = req.params.id;
     const { title, year, format, actors } = req.body;
@@ -106,7 +148,7 @@ try {
   }
 });
 
-app.get("/api/v1/movies/:id", async (req,res)=> { 
+app.get("/api/v1/movies/:id", authMiddleware, async (req,res)=> { 
     try {
         const movieId = req.params.id;
         const movie = await Movie.findOne({where: {id: movieId}});
@@ -125,7 +167,7 @@ app.get("/api/v1/movies/:id", async (req,res)=> {
     }
 });
 
-app.get("/api/v1/movies", async (req, res) => {
+app.get("/api/v1/movies", authMiddleware, async (req, res) => {
     try {
         const { sort, order, limit, offset, title, actor } = req.query;
 
@@ -187,7 +229,7 @@ app.get("/api/v1/movies", async (req, res) => {
     }
 });
 
-app.post("/api/v1/movies/import", async (req, res) => {
+app.post("/api/v1/movies/import", authMiddleware, async (req, res) => {
     const rawText = req.body;
 
     try {
