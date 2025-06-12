@@ -1,6 +1,6 @@
-const { DataTypes } = require("sequelize");
+const { DataTypes } = require('sequelize');
 const sequelize = require('../sequelize');
-const Star = sequelize.define("Star", {
+const Star = sequelize.define('Star', {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
@@ -8,6 +8,5 @@ const Star = sequelize.define("Star", {
   },
   name: DataTypes.STRING,
 });
-
 
 module.exports = Star;
