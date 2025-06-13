@@ -1,5 +1,9 @@
 A node.js web server app for storing movie information, with optional frontend next.js client
 
+Docker Hub Image link:  
+[https://hub.docker.com/r/danilodiedov/movies](https://hub.docker.com/r/danilodiedov/movies)
+
+
 INSTALL AND RUN <br>
 To download the app to your machine, you must run: <br>
 docker pull danilodiedov/movies:latest
@@ -10,6 +14,8 @@ docker run --name movies -p 8000:8050 -e APP_PORT=8050 danilodiedov/movies <br>
 Also, you can choose to run the app together with next.js web client with gui. By default the client port is 3000. <br>
 docker run -p 3000:3000 -p 8050:8050 -e APP_PORT=8050 -e FRONTEND=true danilodiedov/movies<br>
 <br>
+In order to build the docker image yourself, you can run: <br>
+docker build -t danilodiedov/movies -f docker/Dockerfile . <br>
 API available at: http://localhost:8050 <br>
 Frontend GUI available at: http://localhost:3000<br>
 <br>
