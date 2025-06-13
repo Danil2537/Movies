@@ -1,6 +1,8 @@
+// frontend/next.config.js
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    async rewrites() {
+  output: "standalone",
+  async rewrites() {
     return [
       {
         source: '/api/:path*',
