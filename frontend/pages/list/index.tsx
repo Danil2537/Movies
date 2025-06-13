@@ -61,11 +61,10 @@ export default function Home() {
     });
 
     const data = await response.json();
-    console.log(data);
-    if ('movies' in data) {
-      setMovies(data.movies);
-    } else if ('data' in data) {
-      setMovies([data.data]);
+
+    if ('data' in data) {
+      setMovies(data.data);
+      //alert(`Hit data.data ${movies}`);
     } else {
       setMovies([]);
     }
@@ -106,17 +105,30 @@ export default function Home() {
   };
   const fileInputRef = useRef<HTMLInputElement>(null);
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    try {
+      const file = e.target.files?.[0];
 
-    const content = await file.text();
-    token = localStorage.getItem('token') ?? '';
-    const url = `${API_BASE_URL}/movies/import`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { authorization: token ?? '', 'Content-Type': 'text/plain' },
-      body: content,
-    });
+      if (!file) {
+        return;
+      }
+      const token = localStorage.getItem('token') ?? '';
+      const url = `${API_BASE_URL}/movies/import`;
+
+      const formData = new FormData();
+      formData.append('movies', file);
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          authorization: token,
+        },
+        body: formData,
+      });
+
+      const result = await response.json();
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const [openMovieDetailsId, setOpenMovieDetailsId] = useState<number | null>(
@@ -142,7 +154,7 @@ export default function Home() {
 
       if (!res.ok) {
         const err = await res.json();
-        alert(`Error fetching movie details: ${err.error || res.statusText}`);
+        //alert(`Error fetching movie details: ${err.error || res.statusText}`);
         return;
       }
 
@@ -158,7 +170,7 @@ export default function Home() {
         actors: data.actors,
       });
     } catch (error) {
-      alert('Failed to fetch movie details');
+      //alert('Failed to fetch movie details');
       console.error(error);
     }
   };
@@ -211,7 +223,7 @@ export default function Home() {
           <input
             ref={fileInputRef}
             type="file"
-            accept="application/json"
+            accept=".txt,.json,text/plain,application/json"
             className="hidden"
             onChange={handleFileUpload}
           />

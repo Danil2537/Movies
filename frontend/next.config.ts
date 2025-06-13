@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  async rewrites() {
+    output: 'export',
+    async rewrites() {
     return [
       {
         source: '/api/:path*',

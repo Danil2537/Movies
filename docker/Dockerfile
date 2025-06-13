@@ -1,24 +1,36 @@
+# Use official Node.js base image
 FROM node:22
 
+# Set working directory
 WORKDIR /app
 
+# Copy backend and frontend code
 COPY backend ./backend
 COPY frontend ./frontend
 
-WORKDIR /app/backend
-RUN npm install
-
+# Install frontend dependencies and build Next.js app
 WORKDIR /app/frontend
 RUN npm install && npm run build
 
-# Install serve to serve the Next.js frontend
+# Install backend dependencies
+WORKDIR /app/backend
+RUN npm install
+
+# Install serve for frontend static file serving
 RUN npm install -g serve
 
-COPY start.sh /app/start.sh
+# Copy startup script
+COPY docker/start.sh /app/start.sh
 RUN chmod +x /app/start.sh
 
-EXPOSE 8000
+# Set environment variables
+ENV NODE_ENV=production
+
+# Expose ports:
+# - 3000 for frontend
+# - 8050 (or any APP_PORT) for backend
+EXPOSE 3000
 EXPOSE 8050
 
-ENV NODE_ENV=production
+# Start the application
 CMD ["/app/start.sh"]
