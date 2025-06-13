@@ -8,6 +8,12 @@ WORKDIR /app
 COPY backend ./backend
 COPY frontend ./frontend
 
+# Copy environment files
+COPY backend/.env ./backend/.env
+COPY backend/database.sqlite ./backend/database.sqlite
+
+COPY frontend/.env.local ./frontend/.env.local
+
 # Install frontend dependencies and build Next.js app
 WORKDIR /app/frontend
 RUN npm install && npm run build
